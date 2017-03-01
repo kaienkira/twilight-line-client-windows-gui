@@ -9,12 +9,13 @@ public class App : Form
 {
     private TextBox logText;
     private Process tlProcess;
+    private Process kcpProcess;
     private NotifyIcon notifyIcon;
     private int maxLogCount = 500;
 
     public App()
     {
-        this.Text = "Twlight-Line-Windows-GUI";
+        this.Text = "Twlight-Line-Windows-KCP-GUI";
         this.Size = new Size(800, 600);
         this.MaximizeBox = false;
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -60,24 +61,44 @@ public class App : Form
     {
         try {
             string workDir = Path.GetFullPath(".\\");
-            Process p = new Process();
-            p.StartInfo.FileName = workDir +
-                "twilight-line-go-client-windows-amd64.exe";
-            p.StartInfo.CreateNoWindow = true;
-            p.StartInfo.UseShellExecute = false;
-            p.StartInfo.Arguments =
-                "-e " + workDir + "tlclient-config.json";
-            p.StartInfo.RedirectStandardError = true;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.StartInfo.WorkingDirectory = workDir;
-            p.OutputDataReceived += this.OnChildProcessPrint;
-            p.ErrorDataReceived += this.OnChildProcessPrint;
-            this.tlProcess = p;
+            {
+                Process p = new Process();
+                p.StartInfo.FileName = workDir +
+                    "twilight-line-go-client-windows-amd64.exe";
+                p.StartInfo.CreateNoWindow = true;
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.Arguments =
+                    "-e " + workDir + "tlclient-with-kcptun-config.json";
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.WorkingDirectory = workDir;
+                p.OutputDataReceived += this.OnChildProcessPrint;
+                p.ErrorDataReceived += this.OnChildProcessPrint;
+                this.tlProcess = p;
 
-            this.tlProcess.Start();
-            this.tlProcess.BeginOutputReadLine();
-            this.tlProcess.BeginErrorReadLine();
+                this.tlProcess.Start();
+                this.tlProcess.BeginOutputReadLine();
+                this.tlProcess.BeginErrorReadLine();
+            }
+            {
+                Process p = new Process();
+                p.StartInfo.FileName = workDir +
+                    "twilight-line-kcptun-windows-amd64.exe";
+                p.StartInfo.CreateNoWindow = true;
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.Arguments =
+                    "-c " + workDir + "kcptun-config.json";
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.WorkingDirectory = workDir;
+                p.OutputDataReceived += this.OnChildProcessPrint;
+                p.ErrorDataReceived += this.OnChildProcessPrint;
+                this.kcpProcess = p;
 
+                this.kcpProcess.Start();
+                this.kcpProcess.BeginOutputReadLine();
+                this.kcpProcess.BeginErrorReadLine();
+            }
         } catch (Exception e) {
             MessageBox.Show(e.Message);
             Environment.Exit(1);
@@ -92,6 +113,14 @@ public class App : Form
     public void OnClose(object sender, EventArgs args)
     {
         try {
+            if (this.kcpProcess != null) {
+                this.kcpProcess.CancelErrorRead();
+                this.kcpProcess.CancelOutputRead();
+                this.kcpProcess.Kill();
+                this.kcpProcess.Close();
+                this.kcpProcess = null;
+            }
+
             if (this.tlProcess != null) {
                 this.tlProcess.CancelErrorRead();
                 this.tlProcess.CancelOutputRead();
