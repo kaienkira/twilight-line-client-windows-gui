@@ -66,7 +66,7 @@ public class App : Form
             p.StartInfo.CreateNoWindow = true;
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.Arguments =
-                "-e " + workDir + "tlclient-config.json";
+                "-e \"" + workDir + "tlclient-config.json\"";
             p.StartInfo.RedirectStandardError = true;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.WorkingDirectory = workDir;
